@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <conio.h>
 
 struct User {
 	char un[30];
@@ -139,49 +140,72 @@ int login() {
 	char inuser[30];
 	char inpass[24];
 	while(1) {
-        system("cls");
-        printf("----Enter your Username (or 0 to go back)----\n");
-        fgets(inuser, 30, stdin);
-        inuser[strcspn(inuser, "\n")] = 0;
-        if (strcmp(inuser, "0") == 0) {
-    		return -1;
+		system("cls");
+		printf("----Enter your Username (or 0 to go back)----\n");
+		fgets(inuser, 30, stdin);
+		inuser[strcspn(inuser, "\n")] = 0;
+		if (strcmp(inuser, "0") == 0) {
+			return -1;
 		}
-        fflush(stdin);
-        
-        int found = -1;
-        for (i = 0; i < totalUsers; i++) {
-            if(strcmp(inuser, database[i].un) == 0) {
-                found = i;
-                break;
-            }
-        }
-        if (found != -1) {
-            if (database[found].failedattempts >= 3) {
-                printf("Account Locked!\nSee Admin.\n");
-                system("pause");
-                return -1; 
-            }
-            printf("\n----Enter your Password----\n");
-            fgets(inpass, 24, stdin);
-            inpass[strcspn(inpass, "\n")] = 0;
-            fflush(stdin);
+		fflush(stdin);
+		
+		int found = -1;
+		for (i = 0; i < totalUsers; i++) {
+			if(strcmp(inuser, database[i].un) == 0) {
+				found = i;
+				break;
+			}
+		}
+		if (found != -1) {
+			if (database[found].failedattempts >= 3) {
+				printf("Account Locked!\nSee Admin.\n");
+				system("pause");
+				return -1; 
+			}
+			
+			printf("\n----Enter your Password----\n");
+			
+			// --- This is the Password Masking Feature ---
+
+			int p = 0;
+			char ch;
+			while(1) {
+				ch = _getch();
+				
+				if (ch == 13) {
+					inpass[p] = '\0';
+					break;
+				} else if (ch == 8) { 
+					if (p > 0) {
+						p--;
+						printf("\b \b"); 
+					}
+				} else if (p < 23) { 
+					inpass[p] = ch;
+					p++;
+					printf("*");
+				}
+			}
+			printf("\n");
+			// --------------------------------
+
 			encryptPass(inpass);
 
-            if(strcmp(inpass, database[found].pass) == 0) {
-                logActivity(database[found].un, "Login_Attempt", "Success");
-                database[found].failedattempts = 0;
-                return found;
-            } else {
-                printf("Password does not match!\n");
-                database[found].failedattempts++;
-                logActivity(database[found].un, "Login_Attempt", "Fail");
-                system("pause");
-            }
-        } else {
-            printf("Username does not exist!\nPlease try again\n");
-            system("pause");
-        }
-    }
+			if(strcmp(inpass, database[found].pass) == 0) {
+				logActivity(database[found].un, "Login_Attempt", "Success");
+				database[found].failedattempts = 0;
+				return found;
+			} else {
+				printf("Password does not match!\n");
+				database[found].failedattempts++;
+				logActivity(database[found].un, "Login_Attempt", "Fail");
+				system("pause");
+			}
+		} else {
+			printf("Username does not exist!\nPlease try again\n");
+			system("pause");
+		}
+	}
 }
 		
 void userDashboard(int cu) {
